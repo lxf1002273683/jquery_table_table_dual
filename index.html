@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script src="js/jquery.min.js"></script>
+		<style>
+			.main{
+				width: 80%;
+				margin: 100px auto;
+			}
+			input{
+				border: none;
+				box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+				border: 1px solid #ccc;
+				transition: border linear .2s,box-shadow linear .2s;
+				outline: none;
+			}
+			input:focus,
+			.table_list_item_box_btns button:hover{
+				border-color: #aaa;
+				box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.6);
+			}
+			button{
+				background: none;
+				border: none;
+				width: 50%;
+				outline: none;
+				border: 1px solid #ccc;
+				padding: 4px 12px;
+				line-height: 20px;
+				text-align: center;
+				transition: all linear .2s;
+				cursor: pointer;
+			}
+			.table_dual_list_box{
+				font-size: 14px;
+			}
+			.table_list_left_item,
+			.table_dual_list_box:after{
+				content: "";
+				display: block;
+				clear: both;
+			}
+			.table_list_left,
+			.table_list_right{
+				float: left;
+				width: 46%;
+				padding: 2%;
+			}
+			.table_list_title,
+			.table_list_item_num{
+				width: 100%;
+				padding: 10px 0;
+			}
+			.table_list_search{
+				width: 98%;
+				line-height: 21px;
+				padding: 3px 1%;
+				margin-bottom: 5px;
+				border-radius: 4px;
+			}
+			.table_list_item_box_btns button:first-child{
+				border-top-left-radius: 4px;
+				float: left;
+			}
+			.table_list_item_box_btns button:last-child{
+				border-top-right-radius: 4px;
+				float: left;
+			}
+			.table_list_item{
+				border: 1px solid #ccc;
+				border-top-color: white;
+				height: 300px;
+				width: 100%;
+				border-bottom-left-radius: 4px;
+				border-bottom-right-radius: 4px;
+				overflow-y: scroll;
+				cursor: pointer;
+				box-sizing: border-box;
+			}
+			.table_list_item span{
+				display: block;
+				width: 100%;
+				height: 24px;
+				overflow: hidden;
+				text-overflow:ellipsis;
+				white-space:nowrap;
+				position: relative;
+				padding-right: 10%;
+				box-sizing: border-box;
+				padding-left: 10px;
+			}
+			.table_list_item .active{
+				background: #AAAAAA;
+			}
+			.table_list_sort{
+				width: 30px;
+				padding: 0;
+				border: none;
+				border-radius: 5px;
+				float: right;
+			}
+			.table_list_sort:hover{
+				color: #aaa;
+			}
+			.table_list_numerical{
+				font-weight: 400;
+				position: absolute;
+				right: 10px;
+				border: 1px solid #ccc;
+				border-radius: 3px;
+				cursor: pointer;
+				padding: 0 4px;
+				font-size: 12px;
+			}
+			.table_list_numerical.sort_active{
+				background-color: #AAAAAA;
+				color: white;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="main">
+			<div class="table_dual_list_box">
+				<div class="table_list_left">
+					<!--标题-->
+					<div class="table_list_title">
+						<span>未选中</span>
+						<button class="table_list_sort">排序</button>
+					</div>
+					<!--数量-->
+					<div class="table_list_item_num"></div>
+					<div class="table_list_left_search">
+						<input type="text" class="table_list_search" placeholder="filter" />
+					</div>
+					<div class="table_list_item_box">
+						<div class="table_list_item_box_btns">
+							<button class="moveAll">>></button>
+							<button class="move">></button>
+						</div>
+						<div class="table_list_item">
+							<span>1</span>
+							<span>2</span>
+							<span>3</span>
+							<span>4</span>
+							<span>5</span>
+							<span>6</span>
+							<span>7</span>
+							<span>8</span>
+							<span>9</span>
+							<span>10</span>
+							<span>11</span>
+							<span>12</span>
+						</div>
+					</div>
+				</div>
+				<div class="table_list_right">
+					<!--标题-->
+					<div class="table_list_title">
+						<span>选中</span>
+						<button class="table_list_sort">排序</button>
+					</div>
+					<!--数量-->
+					<div class="table_list_item_num"></div>
+					<div class="table_list_right_search">
+						<input type="text" class="table_list_search" placeholder="filter" />
+					</div>
+					<div class="table_list_item_box">
+						<div class="table_list_item_box_btns">
+							<button class="remove"><</button>
+							<button class="removeAll"><<</button>
+						</div>
+						<div class="table_list_item">
+							<span>a</span>
+							<span>b</span>
+							<span>c</span>
+							<span>d</span>
+							<span>e</span>
+							<span>f</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			//插件
+			var module = {
+				table_dual_init:function(){
+					//更新列表数量  需用户自己调用 传入左右
+					var that = this;
+					this.updateNum = function(el){
+						var num = $(el).find('.table_list_item span').length;
+						$(el).find('.table_list_item_num').text(num);
+					}
+					//搜索 需用户自己初始
+					this.querySearch = function(el,func){
+						$(el).on('change', '.table_list_search', func);
+					}
+					//span添加点击初始 
+					this.optionAddClick = function(){
+						$('.table_list_item').on('click', 'span', function(){
+							if(!that.sortState) return false;
+							$(this).toggleClass('active');
+						})
+					}
+					//添加
+					this.move = function(){
+						operation('.move', '.table_list_left', '.table_list_right', false);
+					}
+					//全部添加
+					this.moveAll = function(){
+						operation('.moveAll', '.table_list_left', '.table_list_right', true);
+					}
+					//删除
+					this.remove = function(){
+						operation('.remove', '.table_list_right', '.table_list_left', false);
+					}
+					//全部删除
+					this.removeAll = function(){
+						operation('.removeAll', '.table_list_right', '.table_list_left', true);
+					}
+					//el添加事件元素  from数据所在位置  to添加位置 type 1是全部 0是单个
+					var operation = function(el, from, to, type){
+						$(el).on('click', function(){
+							if(!that.sortState) return false;
+							$(from).find('.table_list_item span').each(function(){
+								if(type){
+									$(to).find('.table_list_item').prepend(this);
+								}
+								if(!type){
+									if($(this).hasClass("active")){
+							        	$(to).find('.table_list_item').prepend(this);
+							        }
+								}
+						    })
+							that.updateNum(from);
+							that.updateNum(to);
+						})
+					}
+					
+					//排序需用户自己初始
+					this.sortState = true;
+					this.sortDefault = 1;
+					this.sort = function(el){
+						$(el).on('click', '.table_list_sort', function(){
+							if(that.sortState){
+								that.sortState = false;
+								$(this).parent().siblings('.table_list_item_box').find('span').each(function(){
+									var str = '<b class="table_list_numerical">'+that.sortDefault+'</b>';
+									$(this).append(str)
+								})
+								$(this).text('完成');
+							}else{
+								that.sortState = true;
+								this.sortDefault = 1;
+								$(this).parent().siblings('.table_list_item_box').find('span').each(function(){
+									$(this).find('.table_list_numerical').remove();
+								})
+								//完成时重新排序
+								var table_list_item = $(this).parent().siblings('.table_list_item_box').find('.table_list_item');
+								var spans = $(this).parent().siblings('.table_list_item_box').find('.table_list_item span');
+								//带有sort参数 排序
+								for(var i = 1; i <= spans.length; i++){
+									for(var j = 0; j < spans.length; j++){
+										var num = $(spans[j]).attr('data-sort');
+										if(num == i){
+											table_list_item.append(spans[j]);
+										}
+									}
+								}
+								//没有sort参数 排序
+								spans.each(function(){
+									if(!$(this).attr('data-sort')){
+										table_list_item.append(this);
+									}
+									$(this).removeAttr('data-sort');
+									$(this).find('.table_list_numerical').removeClass('sort_active');
+								})
+								$(this).text('排序');
+							}
+						})
+						$('.table_list_item').on('click','.table_list_numerical', function(){
+							if($(this).hasClass('sort_active')){
+								return false;
+							}
+							var num = $(this).text();
+							$(this).parent().attr('data-sort',num);
+							$(this).addClass('sort_active');
+							num++;
+							$(this).parents('.table_list_item').find('span').each(function(){
+								if(!$(this).attr('data-sort')){
+									$(this).find('.table_list_numerical').text(num);
+								}
+							})
+						})
+					}
+
+					//默认初始化
+					this.optionAddClick();
+					this.move();
+					this.moveAll();
+					this.remove();
+					this.removeAll();
+					return this;
+				}
+			}
+			$.fn.extend(module);
+			
+			
+			
+			//使用 
+			//初始化
+			var tab = $('.table_dual_list_box').table_dual_init();
+			//更新数量
+			tab.updateNum('.table_list_left');
+			tab.updateNum('.table_list_right');
+			//输入框绑定事件  回车触发
+			tab.querySearch('.table_list_left',function(){
+				console.log(20);
+			});
+			tab.querySearch('.table_list_right',function(){
+				console.log(30);
+			});
+			tab.sort('.table_list_right');
+
+		</script>
+	</body>
+</html>
